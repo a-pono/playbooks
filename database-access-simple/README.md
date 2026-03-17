@@ -23,9 +23,17 @@ This example covers a realistic scenario:
 - **Cross-source joins** - ClickHouse querying Postgres dictionaries via `postgresql()` table function
 - **Local file queries** - ClickHouse querying CSV/Parquet files with `file()` or `clickhouse-local`
 
-## Usage
+## Setup
 
-Copy `DATABASES.md` into your project root (or wherever your AI agent reads context from). Edit connection details, table names, and query patterns to match your setup.
+1. Copy `DATABASES.md` into your project root
+2. Edit connection details, table names, and query patterns to match your setup
+3. Done - most AI coding agents (Claude Code, Cursor, Copilot) will pick it up automatically
+
+If your agent doesn't discover the file on its own, add this line to your `CLAUDE.md`, `AGENTS.md`, or equivalent instructions file:
+
+```
+Before running any database query, read DATABASES.md for connection details, available tables, and query patterns.
+```
 
 That's it. No install, no config, no build step.
 
