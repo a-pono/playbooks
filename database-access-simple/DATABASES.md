@@ -117,45 +117,47 @@ ORDER BY hour, cnt DESC;
 
 ---
 
-## Cross-Source Joins (ClickHouse + PostgreSQL)
+## Cross-Source Queries (ClickHouse + PostgreSQL + Local Files)
 
-ClickHouse can query PostgreSQL tables directly using the `postgresql()` table function.
-Use this when you need reference/dictionary data from Postgres inside an analytical query.
+ClickHouse can query external sources directly - no ETL, no data copying:
+- **PostgreSQL** via `postgresql()` table function
+- **Local files** (CSV, Parquet, JSON) via `file()` or `clickhouse-local`
 
-**Pattern:**
+You can join all three in a single query:
+
 ```sql
 SELECT
-    e.event_type,
     e.event_date,
     p.name AS product_name,
-    p.price,
-    c.name AS category
+    c.name AS category,
+    f.segment AS user_segment,
+    count() AS purchases
 FROM events e
-JOIN postgresql('pg-host:5432', 'ecommerce', 'products', 'app_user', 'password') AS p
+JOIN postgresql('pg-host:5432', 'ecommerce', 'products', 'app_user', 'pass') AS p
     ON e.product_id = p.id
-JOIN postgresql('pg-host:5432', 'ecommerce', 'categories', 'app_user', 'password') AS c
+JOIN postgresql('pg-host:5432', 'ecommerce', 'categories', 'app_user', 'pass') AS c
     ON p.category_id = c.id
-WHERE e.event_date = today()
-  AND e.event_type = 'purchase';
+JOIN file('user_segments.csv', CSVWithNames) AS f
+    ON e.user_id = f.user_id
+WHERE e.event_date >= today() - 7
+  AND e.event_type = 'purchase'
+GROUP BY e.event_date, p.name, c.name, f.segment
+ORDER BY purchases DESC
 ```
 
-**When to use:**
-- Enriching analytics with product names, user details, category labels
-- Ad-hoc queries where you need the latest reference data
-- Avoid for high-frequency queries - each call hits Postgres in real time
+One query. Three sources. No middleware.
 
-**When NOT to use:**
-- If the Postgres table has millions of rows (will be slow over network)
-- For dashboards or repeated queries - materialize the data into a ClickHouse dictionary instead
+**Simpler examples:**
 
----
+```sql
+-- Just Postgres lookup
+SELECT e.event_type, p.name AS product_name
+FROM events e
+JOIN postgresql('pg-host:5432', 'ecommerce', 'products', 'app_user', 'pass') AS p
+    ON e.product_id = p.id
+WHERE e.event_date = today();
 
-## Local File Queries (ClickHouse)
-
-ClickHouse can query CSV, Parquet, and JSON files directly.
-
-**Using `clickhouse-local` (no server needed):**
-```bash
+-- Just local file query (no server needed)
 clickhouse-local -q "
     SELECT product_id, sum(amount) AS total
     FROM file('exports/sales_2024.csv', CSVWithNames)
@@ -165,26 +167,15 @@ clickhouse-local -q "
 "
 ```
 
-**Using `clickhouse-client` with server (files must be in `user_files` directory):**
-```sql
-SELECT *
-FROM file('enrichment.csv', CSVWithNames)
-WHERE region = 'US';
-```
+**Supported file formats:** CSV, CSVWithNames, TSV, Parquet, JSONEachRow, and many more.
 
-**Joining server data with local files:**
-```sql
-SELECT
-    e.event_date,
-    e.user_id,
-    f.segment
-FROM events e
-JOIN file('user_segments.csv', CSVWithNames) f
-    ON e.user_id = f.user_id
-WHERE e.event_date >= today() - 30;
-```
+**When to use:**
+- Ad-hoc analytics enriched with reference data from Postgres
+- One-off queries combining server data with local CSV/Parquet exports
+- Exploratory analysis where you need data from multiple sources fast
 
-**Supported formats:** CSV, CSVWithNames, TSV, Parquet, JSONEachRow, and many more.
+**Production note:**
+The `postgresql()` function pulls data over the network on every query. For small lookup tables (categories, products) this is fine. For large tables or repeated/dashboard queries, materialize the data into a ClickHouse [Dictionary](https://clickhouse.com/docs/en/sql-reference/dictionaries) or schedule a periodic sync instead. Similarly, `file()` on the server requires files to be in the `user_files` directory - use `clickhouse-local` for arbitrary file paths.
 
 ---
 
