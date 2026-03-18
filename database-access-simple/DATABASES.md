@@ -26,6 +26,52 @@ psql -h pg-host -p 5432 -U app_user -d ecommerce
 | `order_items` | Line items per order | ~8M |
 | `categories` | Product categories (dictionary) | ~200 |
 
+**Columns:**
+
+`products`:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial (PK) | Product ID |
+| name | varchar(255) | Product display name |
+| price | numeric(10,2) | Current price in USD |
+| category_id | int (FK) | References categories.id |
+| is_active | boolean | Whether product is listed |
+| created_at | timestamptz | When product was added |
+
+`users`:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial (PK) | User ID |
+| email | varchar(255) | Unique, login identifier |
+| name | varchar(255) | Display name |
+| country | char(2) | ISO country code |
+| created_at | timestamptz | Registration date |
+
+`orders`:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial (PK) | Order ID |
+| user_id | int (FK) | References users.id |
+| total_amount | numeric(10,2) | Order total in USD |
+| status | varchar(20) | pending, completed, cancelled |
+| created_at | timestamptz | When order was placed |
+
+`order_items`:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial (PK) | Line item ID |
+| order_id | int (FK) | References orders.id |
+| product_id | int (FK) | References products.id |
+| quantity | int | Units ordered |
+| unit_price | numeric(10,2) | Price at time of purchase |
+
+`categories`:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial (PK) | Category ID |
+| name | varchar(100) | Category name |
+| parent_id | int (FK, nullable) | Self-referencing for hierarchy |
+
 **Relationships:**
 - `orders.user_id` -> `users.id`
 - `order_items.order_id` -> `orders.id`
@@ -74,6 +120,48 @@ clickhouse-client -h ch-host --port 9000 -u analyst -d analytics --password
 | `page_views` | Page view tracking | ~12B | MergeTree |
 | `daily_metrics` | Pre-aggregated daily stats | ~50M | SummingMergeTree |
 | `sessions` | User sessions | ~800M | MergeTree |
+
+**Columns:**
+
+`events`:
+| Column | Type | Description |
+|--------|------|-------------|
+| event_date | Date | Partition key, date of event |
+| event_time | DateTime | Exact timestamp (UTC) |
+| user_id | UInt64 | User identifier |
+| event_type | String | click, purchase, view, signup |
+| product_id | UInt32 | Product involved (0 if N/A) |
+| amount | Decimal(10,2) | Transaction amount (USD, 0 if non-purchase) |
+| device | LowCardinality(String) | desktop, mobile, tablet |
+| country | LowCardinality(String) | ISO country code |
+
+`page_views`:
+| Column | Type | Description |
+|--------|------|-------------|
+| view_date | Date | Partition key |
+| view_time | DateTime | Exact timestamp (UTC) |
+| user_id | UInt64 | User identifier (0 if anonymous) |
+| url_path | String | Page path (e.g. /products/123) |
+| referrer | String | Referring URL (empty if direct) |
+| duration_ms | UInt32 | Time on page in milliseconds |
+
+`daily_metrics`:
+| Column | Type | Description |
+|--------|------|-------------|
+| date | Date | Partition key |
+| metric_name | LowCardinality(String) | dau, revenue, signups, page_views |
+| dimension | String | Breakdown dimension value |
+| value | Float64 | Metric value (auto-summed by engine) |
+
+`sessions`:
+| Column | Type | Description |
+|--------|------|-------------|
+| session_id | String | Unique session identifier |
+| user_id | UInt64 | User identifier |
+| started_at | DateTime | Session start (UTC) |
+| ended_at | DateTime | Session end (UTC) |
+| page_count | UInt16 | Pages viewed in session |
+| device | LowCardinality(String) | desktop, mobile, tablet |
 
 **Partitioning:**
 - `events` - partitioned by `toYYYYMM(event_date)`, ordered by `(user_id, event_date, event_type)`
