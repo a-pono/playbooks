@@ -3,6 +3,13 @@
 This file describes all available databases, how to connect, and how to query them.
 Read this before running any database queries.
 
+## Security Rules
+
+- **NEVER read `.env` directly.** Do not `cat`, `read`, `print`, or pass `.env` contents to the model.
+- Before running any CLI command, run `source .env` to load credentials into the shell environment.
+- Use environment variable names (`$PG_PASSWORD`, `$CH_PASSWORD`) in all commands and queries — never hardcoded values.
+- See `.env.template` for required variable names.
+
 ---
 
 ## PostgreSQL (Transactional)
@@ -13,7 +20,8 @@ Read this before running any database queries.
 
 **Connection:**
 ```bash
-psql -h pg-host -p 5432 -U app_user -d ecommerce
+source .env
+psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DATABASE
 ```
 
 **Key tables:**
@@ -109,7 +117,8 @@ LIMIT 10;
 
 **Connection:**
 ```bash
-clickhouse-client -h ch-host --port 9000 -u analyst -d analytics --password
+source .env
+clickhouse-client -h $CH_HOST --port $CH_PORT -u $CH_USER -d $CH_DATABASE --password $CH_PASSWORD
 ```
 
 **Key tables:**
@@ -213,7 +222,9 @@ ClickHouse can query external sources directly - no ETL, no data copying:
 
 You can join all three in a single query:
 
-```sql
+```bash
+source .env
+clickhouse-client -q "
 SELECT
     e.event_date,
     p.name AS product_name,
@@ -221,9 +232,9 @@ SELECT
     f.segment AS user_segment,
     count() AS purchases
 FROM events e
-JOIN postgresql('pg-host:5432', 'ecommerce', 'products', 'app_user', 'pass') AS p
+JOIN postgresql('$PG_HOST:$PG_PORT', '$PG_DATABASE', 'products', '$PG_USER', '$PG_PASSWORD') AS p
     ON e.product_id = p.id
-JOIN postgresql('pg-host:5432', 'ecommerce', 'categories', 'app_user', 'pass') AS c
+JOIN postgresql('$PG_HOST:$PG_PORT', '$PG_DATABASE', 'categories', '$PG_USER', '$PG_PASSWORD') AS c
     ON p.category_id = c.id
 JOIN file('user_segments.csv', CSVWithNames) AS f
     ON e.user_id = f.user_id
@@ -231,27 +242,32 @@ WHERE e.event_date >= today() - 7
   AND e.event_type = 'purchase'
 GROUP BY e.event_date, p.name, c.name, f.segment
 ORDER BY purchases DESC
+"
 ```
 
 One query. Three sources. No middleware.
 
 **Simpler examples:**
 
-```sql
--- Just Postgres lookup
+```bash
+source .env
+
+# Postgres lookup via ClickHouse
+clickhouse-client -q "
 SELECT e.event_type, p.name AS product_name
 FROM events e
-JOIN postgresql('pg-host:5432', 'ecommerce', 'products', 'app_user', 'pass') AS p
+JOIN postgresql('$PG_HOST:$PG_PORT', '$PG_DATABASE', 'products', '$PG_USER', '$PG_PASSWORD') AS p
     ON e.product_id = p.id
-WHERE e.event_date = today();
+WHERE e.event_date = today()
+"
 
--- Just local file query (no server needed)
+# Local file query (no server needed)
 clickhouse-local -q "
-    SELECT product_id, sum(amount) AS total
-    FROM file('exports/sales_2024.csv', CSVWithNames)
-    GROUP BY product_id
-    ORDER BY total DESC
-    LIMIT 10
+SELECT product_id, sum(amount) AS total
+FROM file('exports/sales_2024.csv', CSVWithNames)
+GROUP BY product_id
+ORDER BY total DESC
+LIMIT 10
 "
 ```
 
@@ -271,8 +287,8 @@ The `postgresql()` function pulls data over the network on every query. For smal
 
 | Need | Tool | Example |
 |------|------|---------|
-| Query Postgres | `psql` | `psql -h pg-host -d ecommerce -c "SELECT ..."` |
-| Query ClickHouse | `clickhouse-client` | `clickhouse-client -q "SELECT ..."` |
+| Query Postgres | `psql` | `psql -h $PG_HOST -d $PG_DATABASE -c "SELECT ..."` |
+| Query ClickHouse | `clickhouse-client` | `clickhouse-client -h $CH_HOST -q "SELECT ..."` |
 | Query local files | `clickhouse-local` | `clickhouse-local -q "SELECT * FROM file('data.csv', CSVWithNames)"` |
-| Join CH + Postgres | `clickhouse-client` | Use `postgresql()` table function inside CH query |
+| Join CH + Postgres | `clickhouse-client` | Use `postgresql()` table function with env vars inside CH query |
 | Join CH + files | `clickhouse-client` | Use `file()` function inside CH query |
