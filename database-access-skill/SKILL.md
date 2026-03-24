@@ -1,27 +1,27 @@
 ---
 name: database-access-skill
-description: Query databases safely and accurately using CLI tools and structured documentation. Use when the user asks data questions, needs to explore database schemas, or wants to run SQL queries against PostgreSQL or ClickHouse.
+description: Query databases safely and accurately using CLI tools and structured documentation. Use when the user asks data questions, needs to explore database schemas, wants to run SQL queries, check table structures, find column types, analyze data, build reports, or debug data issues. Also use when the user mentions specific table names, database names, or asks questions like "how many rows", "what columns does X have", or "show me the schema."
 ---
 
 # Database Access Skill
 
-Query databases safely and accurately using CLI tools and structured documentation.
+A structured approach to giving AI coding agents safe, accurate access to your databases - using markdown files and CLI tools instead of custom integrations.
 
 ## Security
 
-- **NEVER read `.env` directly.** Do not `cat`, `read`, `print`, or log `.env` contents. Credentials must never appear in context.
-- Before running any CLI command, load credentials into the shell environment:
-  ```bash
-  source .env && <cli-command>
-  ```
-- Use environment variable names (`$PG_HOST`, `$CH_PASSWORD`, etc.) in all commands - never hardcoded values.
-- See `assets/.env.example` for all required variable names.
+Credentials in `.env` must never be read directly (`cat`, `read`, `print`, or logged) because they would leak into the LLM context window and potentially into logs or conversation history. Instead, load them into the shell environment so they're used by the CLI tool but never visible in the output:
+
+```bash
+source .env && <cli-command>
+```
+
+Use environment variable names (`$PG_HOST`, `$CH_PASSWORD`, etc.) in all commands - never hardcoded values. See `assets/.env.example` for all required variable names.
 
 ## .env Setup
 
 1. Copy the template to your project root:
    ```bash
-   cp assets/.env.example .env
+   cp ${CLAUDE_SKILL_DIR}/assets/.env.example .env
    ```
 2. Fill in real values. Use **single quotes** for passwords (handles special characters safely):
    ```bash
@@ -45,11 +45,11 @@ Analytical database. Event streams, page views, pre-aggregated metrics. Billions
 
 ## Query Rules
 
-1. **Read before you query.** Before writing any SQL, read the DDL file (`references/ddl/...`) for every table you plan to use. No exceptions. Do not guess column names, types, or relationships.
-2. **Use partition keys.** Large tables (events, page_views) are partitioned by date. Always include a date filter to avoid full table scans.
-3. **LIMIT results.** Always add `LIMIT` unless you specifically need all rows. Start with `LIMIT 100` for exploration.
-4. **Read-only.** No INSERT, UPDATE, DELETE, DROP, or ALTER. Queries only.
-5. **Use statistics for planning.** DDL files include row counts, null rates, distinct values, and value ranges. Use these to plan joins and estimate result sizes before running queries.
+1. **Read before you query.** Before writing any SQL, read the DDL file (`references/ddl/...`) for every table you plan to use. DDL files contain column names, types, relationships, and statistics that prevent wrong assumptions and wasted queries.
+2. **Use partition keys.** Large tables (events, page_views) are partitioned by date. Without a date filter, the query scans the entire table - billions of rows, minutes of wall time, and potentially an expensive mistake on a production cluster.
+3. **LIMIT results.** Start with `LIMIT 100` for exploration. Only remove the limit when you specifically need the full result set.
+4. **Read-only.** This skill is for querying only - no INSERT, UPDATE, DELETE, DROP, or ALTER. If the user needs to modify data, surface that as a separate conversation.
+5. **Use statistics for planning.** DDL files include row counts, null rates, distinct values, and value ranges. Use these to plan joins and estimate result sizes before running queries - this is what makes the skill better than raw schema access.
 
 ## Workflow
 
