@@ -1,5 +1,5 @@
 ---
-name: database-access
+name: database-access-skill
 description: Query databases safely and accurately using CLI tools and structured documentation. Use when the user asks data questions, needs to explore database schemas, or wants to run SQL queries against PostgreSQL or ClickHouse.
 ---
 
