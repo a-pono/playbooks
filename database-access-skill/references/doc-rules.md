@@ -29,7 +29,7 @@ references/ddl/<database>/
     └── schema.FunctionName.md
 ```
 
-Only create type folders that the database actually uses. ClickHouse has no stored procedures - don't create an empty `procedure/` folder.
+Only create type directories that the database actually uses. ClickHouse has no stored procedures - don't create an empty `procedure/` directory.
 
 ## Required Sections
 

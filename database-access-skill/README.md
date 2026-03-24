@@ -2,7 +2,7 @@
 
 A structured approach to giving AI coding agents safe, accurate access to your databases.
 
-Instead of building MCP servers or custom tooling, this skill uses a folder of markdown files + the CLI tools you already have installed.
+Instead of building MCP servers or custom tooling, this skill uses a directory of markdown files + the CLI tools you already have installed.
 
 ## How It Works
 
@@ -20,7 +20,7 @@ This example covers a realistic e-commerce scenario:
 
 ## Setup
 
-1. Copy this folder into your project
+1. Copy this directory into your project
 2. Copy `assets/.env.example` to `.env` in the project root and fill in your credentials
 3. Edit the database reference files and DDL files to match your actual databases
 4. Your AI agent reads `SKILL.md` and takes it from there
