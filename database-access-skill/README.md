@@ -27,4 +27,4 @@ This example covers a realistic e-commerce scenario:
 
 ## Why Not MCP?
 
-[See the companion LinkedIn post](https://www.linkedin.com/in/aeponomarenko/recent-activity/all/)
+[See the companion post](https://www.linkedin.com/feed/update/urn:li:activity:7439634762421567490/)
