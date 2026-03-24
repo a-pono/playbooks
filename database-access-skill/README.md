@@ -27,4 +27,4 @@ This example covers a realistic e-commerce scenario:
 
 ## Why Not MCP?
 
-[See the companion post](https://www.linkedin.com/feed/update/urn:li:activity:7439634762421567490/)
+[See the companion post](https://www.linkedin.com/posts/aeponomarenko_stop-building-mcp-servers-for-database-access-activity-7439634762421567490-B24S)
