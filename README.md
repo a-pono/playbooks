@@ -8,7 +8,7 @@ A collection of tools, patterns, and ideas I find worth sharing.
 |-----------|------------|-----------|
 | `database-access-simple/` | Query any database with AI agents using a single markdown file | [LinkedIn](https://www.linkedin.com/posts/aeponomarenko_stop-building-mcp-servers-for-database-access-activity-7439634762421567490-B24S) |
 | `database-access-skill/` | Multi-database skill with DDL statistics and self-growing documentation | [LinkedIn](https://www.linkedin.com/posts/aeponomarenko_last-week-i-posted-stop-building-mcp-servers-activity-7442174736786210816-31nF) |
-| `parquet-compression/` | Two config changes for up to 50% less Parquet storage + faster reads | |
+| `parquet-compression/` | Two config changes for up to 50% less Parquet storage + faster reads | [LinkedIn](https://www.linkedin.com/posts/aeponomarenko_half-your-storage-bill-might-be-a-config-activity-7444707993448861696-UqLp) |
 
 ## Who Is This For
 
