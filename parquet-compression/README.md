@@ -29,14 +29,20 @@ If you're running Parquet at any real volume and haven't touched these settings,
 spark.conf.set("spark.sql.parquet.compression.codec", "zstd")
 
 # Option 2: Set per-write
-df.orderBy("date", "region", "customer_id") \
-  .write \
+df.write \
   .option("compression", "zstd") \
   .mode("overwrite") \
   .parquet("s3://bucket/path/")
 
-# Sort before writing - pick columns based on your most common query filters
-df.orderBy("date", "region", "customer_id") \
+# Sort within partitions - no shuffle, same compression benefit
+df.sortWithinPartitions("date", "region", "customer_id") \
+  .write \
+  .mode("overwrite") \
+  .parquet("s3://bucket/path/")
+
+# If you also need faster reads by a specific key, repartition first
+df.repartition("date") \
+  .sortWithinPartitions("date", "region", "customer_id") \
   .write \
   .mode("overwrite") \
   .parquet("s3://bucket/path/")
