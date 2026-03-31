@@ -70,7 +70,3 @@ ORDER BY date, region, customer_id;
 1. **ZSTD vs Snappy**: ZSTD achieves ~40% better compression at the cost of slower compression/decompression. On network storage (S3, HDFS, NAS), the reduced transfer time more than compensates.
 
 2. **Sorting**: Columnar formats like Parquet compress better when similar values are adjacent. Sorting also tightens row group min/max statistics, enabling predicate pushdown - the query engine skips entire row groups that don't match your filters.
-
-## License
-
-MIT
