@@ -78,6 +78,10 @@ FROM my_table
 ORDER BY date, region, customer_id;
 ```
 
+## Compatibility
+
+ZSTD is supported by all modern engines: Spark 2.4+, Presto, Trino, Hive 3.x+, ClickHouse, DuckDB, Athena, BigQuery. If your readers are from the last 5-6 years, you're fine. Older tools (Spark < 2.4, Hive 2.x) may not support ZSTD - check before switching if you have legacy consumers.
+
 ## Why It Works
 
 1. **ZSTD vs Snappy**: ZSTD achieves up to ~40% better compression at the cost of slower compression/decompression. On network storage (S3, HDFS, NAS), the reduced transfer time more than compensates.
