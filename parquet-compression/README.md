@@ -25,8 +25,15 @@ If you're running Parquet at any real volume and haven't touched these settings,
 ### Spark
 
 ```python
-# Switch compression from Snappy to ZSTD
+# Option 1: Set globally for all Parquet writes in this session
 spark.conf.set("spark.sql.parquet.compression.codec", "zstd")
+
+# Option 2: Set per-write
+df.orderBy("date", "region", "customer_id") \
+  .write \
+  .option("compression", "zstd") \
+  .mode("overwrite") \
+  .parquet("s3://bucket/path/")
 
 # Sort before writing - pick columns based on your most common query filters
 df.orderBy("date", "region", "customer_id") \
