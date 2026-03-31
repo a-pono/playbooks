@@ -4,7 +4,7 @@ Half your storage bill might be a config problem, not a data problem.
 
 Most Spark jobs write Parquet with Snappy compression. Vertica does the same. It's been the default forever, and almost nobody questions it.
 
-Switching to ZSTD is a one-line config change. No code rewrite, no schema changes, nothing breaks. That alone saves around 30% storage.
+Switching to ZSTD is a one-line config change. No code rewrite, no schema changes, nothing breaks. That alone saves around 40% storage.
 
 Then sort your data before writing. Pick columns based on your most common query filters - date, region, customer ID, whatever gets filtered the most. Sorting improves compression because similar values end up next to each other, and it tightens row group min/max statistics so the query engine can skip entire row groups through predicate pushdown.
 
@@ -67,7 +67,7 @@ ORDER BY date, region, customer_id;
 
 ## Why It Works
 
-1. **ZSTD vs Snappy**: ZSTD achieves ~30% better compression at the cost of slower compression/decompression. On network storage (S3, HDFS, NAS), the reduced transfer time more than compensates.
+1. **ZSTD vs Snappy**: ZSTD achieves ~40% better compression ([Uber's benchmark](https://www.uber.com/blog/cost-efficiency-big-data/) showed ~39%) at the cost of slower compression/decompression. On network storage (S3, HDFS, NAS), the reduced transfer time more than compensates.
 
 2. **Sorting**: Columnar formats like Parquet compress better when similar values are adjacent. Sorting also tightens row group min/max statistics, enabling predicate pushdown - the query engine skips entire row groups that don't match your filters.
 
